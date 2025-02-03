@@ -46,16 +46,17 @@ def get_api(number: str):  # Ensure number is an integer
     except:
         fun_fact = "Could not fetch fun fact"
 
+    abs_number = abs(number) 
     # Classify the number
-    prime_status = is_prime(abs(number))
-    perfect_status = is_perfect(abs(number))
-    armstrong_status = is_armstrong(abs(number))
+    prime_status = is_prime(abs_number)
+    perfect_status = is_perfect(abs_number)
+    armstrong_status = is_armstrong(abs_number)
 
-    properties = ["even" if is_even(abs(number)) else "odd"]
+    properties = ["even" if is_even(abs_number) else "odd"]
     if armstrong_status:
         properties.insert(0, "armstrong")
 
-    digit_sum = sum(int(digit) for digit in str(abs(number)))
+    digit_sum = sum(int(digit) for digit in str(abs_number))
     # Return the classification result
     return {
         "number": str(number),

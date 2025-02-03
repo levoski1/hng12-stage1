@@ -41,20 +41,19 @@ uvicorn main:app --reload
 ```
 
 ### **2️⃣ Clone the Repository**
-- URL: https://hng12-stage1.onrender.com/
+- URL: https://hng12-stage1-mgg0.onrender.com/api/classify-number?number=890
 
 - Response Format (200 OK)
 
     {
-        "number": "-153",
+        "number": "890",
         "is_prime": false,
         "is_perfect": false,
         "properties": [
-        "armstrong",
-        "odd"
+            "even"
         ],
-        "digit_sum": 9,
-        "fun_fact": "-153 is a boring number."
+        "digit_sum": 17,
+        "fun_fact": "890 is an uninteresting number."
     }
 
 🔗 Related Resources
