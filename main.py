@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Any
-import requests  # Missing import
+import httpx  # Faster async requests
+import asyncio
 
 from myfunction import (
     is_armstrong,
@@ -10,7 +11,6 @@ from myfunction import (
     is_prime,
 )
 
-# Initialize FastAPI
 app = FastAPI()
 
 # Configure CORS
@@ -22,44 +22,54 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def home():
     return {"message": "Welcome to the Number Classification API"}
 
 
-@app.get("/api/classify-number", status_code=200)
-def get_api(number: str):  # Ensure number is an integer
-    # Validate if number is an integer
-    if not number.lstrip('-').isdigit():  # Allows negative numbers too
+async def fetch_fun_fact(number: int) -> str:
+    """ Fetch fun fact asynchronously to avoid blocking response time. """
+    fun_fact_url = f"http://numbersapi.com/{number}/math"
+    try:
+        async with httpx.AsyncClient(timeout=0.5) as client:
+            response = await client.get(fun_fact_url)
+            if response.status_code == 200:
+                return response.text
+    except httpx.RequestError:
+        pass
+    return "No fun fact available"
+
+
+@app.get("/api/classify-number")
+async def get_api(number: str):
+    if not number.lstrip('-').isdigit():
         return {
-            "number": number,  # Keep the invalid input in response
+            "number": number,
             "error": True
         }
 
-    number = int(number)  # Convert to integer after validation
-    
-    # Fetch fun fact from Numbers API
-    fun_fact_url = f"http://numbersapi.com/{number}/math"
-    try:
-        fun_fact_response = requests.get(fun_fact_url)
-        fun_fact = fun_fact_response.text if fun_fact_response.status_code == 200 else "No fun fact available"
-    except:
-        fun_fact = "Could not fetch fun fact"
+    number = int(number)
+    abs_number = abs(number)  # Avoid multiple calls to abs()
 
-    abs_number = abs(number) 
-    # Classify the number
-    prime_status = is_prime(abs_number)
-    perfect_status = is_perfect(abs_number)
-    armstrong_status = is_armstrong(abs_number)
+    # Run classification tasks in parallel using asyncio
+    results = await asyncio.gather(
+        asyncio.to_thread(is_prime, abs_number),
+        asyncio.to_thread(is_perfect, abs_number),
+        asyncio.to_thread(is_armstrong, abs_number),
+        fetch_fun_fact(number)  # Asynchronous API request
+    )
+
+    prime_status, perfect_status, armstrong_status, fun_fact = results
 
     properties = ["even" if is_even(abs_number) else "odd"]
     if armstrong_status:
         properties.insert(0, "armstrong")
 
     digit_sum = sum(int(digit) for digit in str(abs_number))
-    # Return the classification result
+
     return {
-        "number": str(number),
+        "number": number,
         "is_prime": prime_status,
         "is_perfect": perfect_status,
         "properties": properties,
