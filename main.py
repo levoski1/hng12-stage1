@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from functools import lru_cache
 from typing import Dict
@@ -30,13 +31,7 @@ def get_api(number: str) -> Dict:
         # Convert the input to an integer
         num = int(number)
     except ValueError:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "number": number,
-                "error": True
-            }
-        )
+        return JSONResponse(status_code=400, content={"error": True, "number": number})
 
     # Fetch fun fact from Numbers API
     fun_fact_url = f"http://numbersapi.com/{num}/math"
